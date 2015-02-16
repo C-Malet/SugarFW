@@ -1,0 +1,9 @@
+ErrorDocument 404 /SugarFW/routers/router.php
+Options +FollowSymLinks -Indexes -MultiViews
+RewriteEngine on
+RewriteBase /
+
+RewriteCond %{ENV:REDIRECT_STATUS} 200
+RewriteRule .* - [L]
+
+RewriteRule ^ sugarRouter.php [L]
