@@ -1,5 +1,10 @@
 <?php
 
+    include 'controllers/SugarModuleController.class.php';
+
+    include 'exceptions/controllers/ControllerNotFoundException.class.php';
+    include 'exceptions/controllers/ClassControllerNotFoundException.class.php';
+
     class SugarRouter {
 
         /* array */
@@ -50,7 +55,7 @@
          * and validating the route
          *
          * @return void
-         * @throw  ControllerNotFoundException
+         * @throws  ControllerNotFoundException
          */
         public function route() {
             $paths = [];
@@ -81,7 +86,6 @@
             }
 
             if (is_null($controllerPath)) {
-                include 'exceptions/ControllerNotFoundException.class.php';
                 throw new ControllerNotFoundException($parsedUrl['path']);
             }
 
@@ -109,8 +113,6 @@
          * @throw  ControllerNotFoundException
          */
         public function launchController() {
-            include 'controllers/SugarModuleController.class.php';
-
             $controllerClassFile = $this->controllerPath . '/_controllers/' . ucfirst($this->controllerName) . '.class.php';
 
             if (!is_file($controllerClassFile)) {
@@ -119,7 +121,6 @@
                 $controllerClassFile = $this->controllerPath . '/_controllers/Controller.class.php';
                 $this->controllerName = $this->DEFAULT_CONTROLLER_NAME;
                 if (!is_file($controllerClassFile)) {
-                    include 'exceptions/ControllerNotFoundException.class.php';
                     throw new ControllerNotFoundException($this->controllerPath);
                 }
             }
@@ -129,6 +130,10 @@
             _SUGAR::setControllerConfiguration($controllerConfiguration);
 
             include $controllerClassFile;
+
+            if (!class_exists($this->controllerName)) {
+                throw new ClassControllerNotFoundException($this->controllerName, $controllerClassFile);
+            }
 
             $controllerName = $this->controllerName;
             $controller = new $controllerName(

@@ -1,5 +1,8 @@
 <?php
 
+    include 'exceptions/actions/ActionNotHandledException.class.php';
+    include 'exceptions/actions/ActionNotImplementedException.class.php';
+
     abstract class SugarModuleController {
 
         /* string */
@@ -15,9 +18,9 @@
         private $configuration;
 
         /**
-         * @param name    controller's name
-         * @param params  parameters of the query to the controller
-         * @param action  action of the controller
+         * @param name   controller's name
+         * @param params parameters of the query to the controller
+         * @param action action of the controller
          */
         public function __construct (
             $name,
@@ -45,8 +48,7 @@
          */
         protected function executeAction() {
             if (!empty($this->action)) {
-                include 'exceptions/ActionNotHandledException.class.php';
-                include 'exceptions/ActionNotImplementedException.class.php';
+
 
                 try {
                     if ($this->validateAction() === false) {
@@ -66,7 +68,7 @@
         /**
          * Checks if the wanted action is handled by the controller
          *
-         * @throw ActionNotHandledException
+         * @throws ActionNotHandledException
          */
         private function validateAction() {
             if (!in_array($this->action, $this->allowedActions())
@@ -81,7 +83,7 @@
                                false;
 
                 if ($strictCheck) {
-                    throw new ActionNotHandledException('Action not available : ' . $this->action . '.');
+                    throw new ActionNotHandledException($this->action);
                 } else {
                     return false;
                 }
