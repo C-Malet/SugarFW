@@ -9,9 +9,14 @@
     include 'exceptions/views/SubViewAlreadyDefinedException.class.php';
     include 'exceptions/views/ViewAlreadyFormedException.class.php';
     include 'exceptions/views/SubViewNotDefinedException.class.php';
+
     include 'exceptions/SugarExecutionException.class.php';
 
+    include 'traits/StaticHelpers.class.php';
+
     class SugarView {
+
+        use StaticHelpers;
 
         /* @var string */
         private $rootContent;
@@ -50,9 +55,6 @@
             'viewSeparator'    => ''
         ];
 
-        /* @var string */
-        private $formedContent;
-
         /**
          * Adds a partial content that will be used to from the view
          *
@@ -64,18 +66,18 @@
          */
         public function addPartialContent($contentPath, $contentName = null) {
             if (file_exists($contentPath) === false) {
-                throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
+                throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
             $content = file_get_contents($contentPath);
             if ($content === false) {
-                throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
+                throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
 
             if ($contentName === null) {
                 $this->addRootContent($contentPath, $content);
             } else {
                 if (isset($this->partialContents[$contentName])) {
-                    throw new ViewAlreadyDefinedException(Sugar::childClass(), $contentName);
+                    throw new ViewAlreadyDefinedException(self::childClass(), $contentName);
                 }
                 $this->partialContents[$contentName] = $content;
             }
@@ -92,16 +94,16 @@
          */
         public function addRootContent($contentPath, $content = null) {
             if (isset($this->rootContent)) {
-                throw new RootViewAlreadyDefinedException(Sugar::childClass());
+                throw new RootViewAlreadyDefinedException(self::childClass());
             }
 
             if ($content === null) {
                 if (file_exists($contentPath) === false) {
-                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
+                    throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
                 }
                 $content = file_get_contents($contentPath);
                 if ($content === false) {
-                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
+                    throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
                 }
             }
             $this->rootContent = $content;
@@ -121,7 +123,7 @@
 
             $this->validateView();
 
-            if (!$isSubView) {
+            if ($isSubView === false) {
                 echo $this->rootContent;
             } else {
                 return $this->rootContent;
@@ -186,7 +188,11 @@
          */
         private function formView($reform = false) {
             if ($this->formed === true && $reform !== true) {
-                throw new ViewAlreadyFormedException(Sugar::childClass());
+                throw new ViewAlreadyFormedException(self::childClass());
+            }
+
+            if ($this->rootContent === null) {
+                throw new ViewRootContentNotSetException(self::childClass());
             }
 
             if (!empty($this->subViews)) {
@@ -199,10 +205,6 @@
                     $content = $view->renderView(true);
                     $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->rootContent);
                 }
-            }
-
-            if ($this->rootContent === null) {
-                throw new ViewRootContentNotSetException(Sugar::childClass());
             }
 
             $this->setIndicators('include');
@@ -250,7 +252,7 @@
          */
         public function assignValue($value, $viewValueName) {
             if (isset($this->assignedValues[$viewValueName])) {
-                throw new ValueAlreadyDefinedException(Sugar::childClass(), $viewValueName);
+                throw new ValueAlreadyDefinedException(self::childClass(), $viewValueName);
             }
 
             if (is_object($value)) {
@@ -270,7 +272,7 @@
          */
         public function mergeView(SugarView $view, $tag) {
             if (isset($this->subViews[$tag])) {
-                throw new SubViewAlreadyDefinedException(Sugar::childClass(), $view, $tag);
+                throw new SubViewAlreadyDefinedException(self::childClass(), $view, $tag);
             }
             $this->subViews[$tag] = $view;
         }
@@ -285,13 +287,13 @@
         public function removeView($view) {
             if (is_string($view)) {
                 if (!isset($this->subViews[$view])) {
-                    throw new SubViewNotDefinedException(Sugar::childClass(), $view);
+                    throw new SubViewNotDefinedException(self::childClass(), $view);
                 }
                 unset($this->subViews[$view]);
             } else if (is_object($view) && $view instanceof SugarView) {
                 $keysToRemove = array_keys($this->subViews, $view, true);
                 if (empty($keysToRemove)) {
-                    throw new SubViewNotDefinedException(Sugar::childClass(), $view);
+                    throw new SubViewNotDefinedException(self::childClass(), $view);
                 }
                 foreach ($keysToRemove as $key) {
                     unset($this->subViews[$key]);
