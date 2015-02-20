@@ -19,6 +19,12 @@
         private $configuration;
 
         /**
+         * At the moment, Sugar controllers are always meant to go through
+         * the SugarModuleController
+         * This is done to ensure that all fields are properly set directly
+         * from the SugarRouter, and that some checks can be done before
+         * the control execution.
+         *
          * @param $name   Controller's name
          * @param $params Parameters of the query to the controller
          * @param $action Action of the controller
@@ -31,8 +37,6 @@
             $this->name   = $name;
             $this->params = $params;
             $this->action = $action;
-
-            $this->executeAction();
 
             $this->control();
         }

@@ -17,6 +17,8 @@
             $subView = new TestView;
             $this->view->mergeView($subView, 'exampleMergeTag');
 
+            $this->executeAction();
+
             $this->view->renderView();
         }
 

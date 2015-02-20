@@ -41,13 +41,12 @@
             $rootPath = $this->getRootPathFromConfiguration();
             $this->path = array_merge($rootPath, $this->path);
 
-            if (isset($parsedUrl['query'])) {
-                $queries = explode('&', $parsedUrl['query']);
-                foreach ($queries as $query) {
-                    $parsedQuery = explode('=', $query);
-                    $key = $parsedQuery[0];
-                    $item = $parsedQuery[1];
-                    $this->controllerParams[$key] = $item;
+            $this->controllerParams = $_REQUEST;
+
+            foreach ($this->controllerParams as $key => &$val) {
+                if ($val === '' || $val === null) {
+                    $this->controllerParams[uniqid()] = $key;
+                    unset($this->controllerParams[$key]);
                 }
             }
         }
