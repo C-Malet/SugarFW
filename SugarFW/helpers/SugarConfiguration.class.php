@@ -30,6 +30,7 @@
         }
 
         public function __call($name, $arguments) {
+            $name = ltrim($name, 'get');
             if (is_array($this->config) && isset($this->config[lcfirst($name)])) {
                 return $this->config[lcfirst($name)];
             } else {

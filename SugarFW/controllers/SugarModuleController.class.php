@@ -48,8 +48,6 @@
          */
         protected function executeAction() {
             if (!empty($this->action)) {
-
-
                 try {
                     if ($this->validateAction() === false) {
                         return false;

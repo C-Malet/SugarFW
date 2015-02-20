@@ -14,7 +14,7 @@
         }
 
         protected function editAction() {
-            echo 'Well done !';
+
         }
 
     }

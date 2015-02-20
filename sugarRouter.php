@@ -16,8 +16,11 @@
 
     include 'helpers/SugarGlobals.class.php';
     include 'helpers/SugarConfiguration.class.php';
+    include 'helpers/SugarLogs.class.php';
     $globalConfiguration = new SugarConfiguration;
+    $logger = new SugarLogs;
     _SUGAR::setGlobalConfiguration($globalConfiguration);
+    _SUGAR::setLogger($logger);
 
     $sugarRouter = new SugarRouter($url);
 
