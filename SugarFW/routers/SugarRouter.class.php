@@ -25,6 +25,9 @@
         /* @var string */
         private $DEFAULT_CONTROLLER_NAME = 'Controller';
 
+        /* @var string */
+        private $DEFAULT_VIEW_NAME = 'View';
+
         /**
          * Initialize the route
          *
@@ -100,7 +103,9 @@
 
             $this->controllerPath = $controllerPath;
             $explode = explode('/', $controllerPath);
-            $this->controllerName = array_pop($explode) . $this->DEFAULT_CONTROLLER_NAME;
+            $name = array_pop($explode);
+            $this->viewName = $name . $this->DEFAULT_VIEW_NAME;
+            $this->controllerName = $name . $this->DEFAULT_CONTROLLER_NAME;
         }
 
         /**
@@ -111,6 +116,7 @@
          */
         public function launchController() {
             $controllerClassFile = $this->controllerPath . '/_controllers/' . ucfirst($this->controllerName) . '.class.php';
+            $viewClassFile = $this->controllerPath . '/_views/' . ucfirst($this->viewName) . '.class.php';
 
             if (!is_file($controllerClassFile)) {
                 // By default, the controller name is equals to (MODULE_NAME . 'Controller')
@@ -127,6 +133,11 @@
             _SUGAR::setControllerConfiguration($controllerConfiguration);
 
             include $controllerClassFile;
+
+            // Auto include of view files is not mandatory
+            if (is_file($viewClassFile)) {
+                include $viewClassFile;
+            }
 
             if (!class_exists($this->controllerName)) {
                 throw new ClassControllerNotFoundException($this->controllerName, $controllerClassFile);
