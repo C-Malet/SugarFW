@@ -3,8 +3,8 @@
     class MainView extends SugarView {
 
         public function __construct() {
-            $this->addRootView('web/html/html.html');
-            $this->addView('web/html/heads/head.html', 'head');
+            $this->addRootContent('web/html/html.html');
+            $this->addPartialContent('web/html/heads/head.html', 'head');
             $this->assignValue('Ma valeur', 'var');
         }
 

@@ -7,29 +7,28 @@
 
     class SugarRouter {
 
-        /* array */
+        /* @var array */
         private $path = [];
 
-        /* array */
+        /* @var array */
         private $controllerParams = [];
 
-        /* string */
+        /* @var string */
         private $controllerPath;
 
-        /* string */
+        /* @var string */
         private $controllerAction;
 
-        /* SugarConfiguration */
+        /* @var SugarConfiguration */
         private $configuration = null;
 
-        /* string */
+        /* @var string */
         private $DEFAULT_CONTROLLER_NAME = 'Controller';
 
         /**
          * Initialize the route
          *
-         * @param url           URL accessed
-         * @param configuration SugarConfiguration object
+         * @param $url URL accessed
          */
         public function __construct($url) {
 
@@ -54,8 +53,7 @@
          * Manage the initialized route, handling specials cases and error,
          * and validating the route
          *
-         * @return void
-         * @throws  ControllerNotFoundException
+         * @throws ControllerNotFoundException
          */
         public function route() {
             $paths = [];
@@ -109,8 +107,7 @@
          * Instantiates the controller found during the routing process
          * and sets its initial values
          *
-         * @return void
-         * @throw  ControllerNotFoundException
+         * @throws ControllerNotFoundException
          */
         public function launchController() {
             $controllerClassFile = $this->controllerPath . '/_controllers/' . ucfirst($this->controllerName) . '.class.php';

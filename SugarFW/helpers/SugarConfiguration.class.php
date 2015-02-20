@@ -2,13 +2,13 @@
 
     class SugarConfiguration {
 
-        /* array */
+        /* @var array */
         private $config;
 
         /**
          * Load a config file
          *
-         * @param iniFile file path of the ini file to load
+         * @param $iniFile file path of the ini file to load
          */
         public function __construct($iniFile = 'sugarConfig.ini') {
             if (is_file($iniFile)) {

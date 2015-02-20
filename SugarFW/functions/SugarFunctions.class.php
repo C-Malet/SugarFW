@@ -3,8 +3,8 @@
     class Sugar {
 
         /**
-         * @param var       variable to be dumped
-         * @param dump_type function to dump the variable
+         * @param $var       variable to be dumped
+         * @param $dump_type function to dump the variable
          *
          * @return void
          */
@@ -14,7 +14,11 @@
             echo '</pre>';
         }
 
-        // http://stackoverflow.com/a/283094/2627459
+        /**
+         * Find the `deepest` child class name
+         *
+         * @see http://stackoverflow.com/a/283094/2627459
+         */
         public static function childClass() {
             return get_called_class();
         }

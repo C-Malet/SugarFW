@@ -3,7 +3,7 @@
     class ActionNotImplementedException extends Exception {
 
         /**
-         * @param actionName the name of the action that is not implemented
+         * @param $actionName Name of the action that is not implemented
          */
         public function __construct($actionName) {
             parent::__construct('Action not implemented : ' . $actionName);

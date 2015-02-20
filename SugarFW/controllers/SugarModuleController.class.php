@@ -2,36 +2,35 @@
 
     include 'exceptions/actions/ActionNotHandledException.class.php';
     include 'exceptions/actions/ActionNotImplementedException.class.php';
+    include 'views/SugarView.class.php';
 
     abstract class SugarModuleController {
 
-        /* string */
+        /* @var string */
         private $name;
 
-        /* array */
+        /* @var array */
         private $action;
 
-        /* array */
+        /* @var array */
         private $params;
 
-        /* SugarConfiguration */
+        /* @var SugarConfiguration */
         private $configuration;
 
         /**
-         * @param name   controller's name
-         * @param params parameters of the query to the controller
-         * @param action action of the controller
+         * @param $name   Controller's name
+         * @param $params Parameters of the query to the controller
+         * @param $action Action of the controller
          */
-        public function __construct (
+        final public function __construct (
             $name,
             $action,
             array $params
         ) {
-            $this->name = $name;
+            $this->name   = $name;
             $this->params = $params;
             $this->action = $action;
-
-            include 'views/SugarView.class.php';
 
             $this->executeAction();
 
@@ -39,27 +38,21 @@
         }
 
         /**
-         * control function executed right after the controller has been instantiated
+         * Control function executed right after the controller has been instantiated
          */
         abstract protected function control();
 
         /**
-         * execute the controller action
+         * Execute the controller action
          */
         protected function executeAction() {
             if (!empty($this->action)) {
-                try {
-                    if ($this->validateAction() === false) {
-                        return false;
-                    }
-
-                    $actionFunction = $this->allowedActions[$this->action];
-                    $this->$actionFunction();
-                } catch (ActionNotHandledException $e) {
-                    die($e->getMessage());
-                } catch (ActionNotImplementedException $e) {
-                    die($e->getMessage());
+                if ($this->validateAction() === false) {
+                    return false;
                 }
+
+                $actionFunction = $this->allowedActions[$this->action];
+                $this->$actionFunction();
             }
         }
 
@@ -104,6 +97,8 @@
 
         /**
          * Checks if the actions declared as allowed are correctly implemented in the Controller
+         *
+         * @param $allowedActions List of allowed actions
          *
          * @throws ActionNotImplementedException
          * @return true;

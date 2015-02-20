@@ -2,7 +2,7 @@
 
     class TestController extends SugarModuleController {
 
-        /* array */
+        /* @var array */
         protected $allowedActions = [
             'edit' => 'editAction'
         ];

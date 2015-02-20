@@ -5,79 +5,103 @@
     include 'exceptions/views/CouldNotLoadViewContentException.class.php';
     include 'exceptions/views/ViewContentNotRenderedException.class.php';
     include 'exceptions/views/ValueAlreadyDefinedException.class.php';
+    include 'exceptions/SugarExecutionException.class.php';
 
     class SugarView {
 
-        /* string */
-        private $viewContent;
+        /* @var string */
+        private $rootContent;
 
-        /* array */
-        private $viewsContent = [];
+        /* @var array */
+        private $partialContents = [];
 
-        /* array */
-        private $viewValues = [];
-
-        /* array */
-        private $sugarTemplateIndicators = [
-            'includeLeft' => '$$',
-            'includeRight' => '$$',
-            'valueLeft' => '{{',
-            'valueRight' => '}}'
-        ];
-
-        /* string */
-        private $includeIndicatorSeparator = '';
-        private $valueIndicatorSeparator = '';
+        /* @var array */
+        private $assignedValues = [];
 
         /**
+         * List of sugarTemplateIndicators used to render the view
+         * Even though these indicators are hard coded here `just in case`, they
+         * are supposed to be retrieved from the global configuration file
+         *
+         * @var array
+         */
+        private $sugarTemplateIndicators = [
+            'includeLeft'      => '$$',
+            'includeRight'     => '$$',
+            'includeSeparator' => '',
+            'valueLeft'        => '{{',
+            'valueRight'       => '}}',
+            'valueSeparator'   => ''
+        ];
+
+        /* @var string */
+        private $formedContent;
+
+        /**
+         * Adds a partial content that will be used to from the view
+         *
          * @param viewContentPath
          * @param $viewContentName
+         *
          * @throws CouldNotLoadViewContentException
          * @throws ViewAlreadyDefinedException
          */
-        public function addView($viewContentPath, $viewContentName = null) {
-            if (file_exists($viewContentPath) === false) {
-                throw new CouldNotLoadViewContentException(Sugar::childClass(), $viewContentName, $viewContentPath);
+        public function addPartialContent($contentPath, $contentName = null) {
+            if (file_exists($contentPath) === false) {
+                throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
             }
-            $viewContent = file_get_contents($viewContentPath);
-            if ($viewContent === false) {
-                throw new CouldNotLoadViewContentException(Sugar::childClass(), $viewContentName, $viewContentPath);
+            $content = file_get_contents($contentPath);
+            if ($content === false) {
+                throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
             }
 
-            if ($viewContentName === null) {
-                $this->addRootView($viewContentPath, $viewContent);
+            if ($contentName === null) {
+                $this->addRootContent($contentPath, $content);
             } else {
-                if (isset($this->views[$viewContentName])) {
-                    throw new ViewAlreadyDefinedException(Sugar::childClass(), $viewContentName);
+                if (isset($this->partialContents[$contentName])) {
+                    throw new ViewAlreadyDefinedException(Sugar::childClass(), $contentName);
                 }
-                $this->views[$viewContentName] = $viewContent;
+                $this->partialContents[$contentName] = $content;
             }
         }
 
-        public function addRootView($viewContentPath, $viewContent = null) {
-            if (isset($this->rootView)) {
+        /**
+         * Adds a root content to the view, that will hold the main content that will be used to form the view
+         *
+         * @param $contentPath Path to the content to load
+         * @param $content     A direct content to assign, to bypass the loading phase
+         *
+         * @throws RootViewAlreadyDefinedException
+         * @throws CouldNotLoadViewContentException
+         */
+        public function addRootContent($contentPath, $content = null) {
+            if (isset($this->rootContent)) {
                 throw new RootViewAlreadyDefinedException(Sugar::childClass());
             }
 
-            if ($viewContent === null) {
-                if (file_exists($viewContentPath) === false) {
-                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $viewContentName, $viewContentPath);
+            if ($content === null) {
+                if (file_exists($contentPath) === false) {
+                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
                 }
-                $viewContent = file_get_contents($viewContentPath);
-                if ($viewContent === false) {
-                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $viewContentName, $viewContentPath);
+                $content = file_get_contents($contentPath);
+                if ($content === false) {
+                    throw new CouldNotLoadViewContentException(Sugar::childClass(), $contentName, $contentPath);
                 }
             }
-            $this->viewContent = $viewContent;
+            $this->rootContent = $content;
         }
 
+        /**
+         * Render the view, applying all the process of the view with assigned contents and outputting the resulting view
+         */
         public function renderView() {
             $this->formView();
+
             $this->assignValues();
 
             $this->validateView();
 
-            echo $this->viewContent;
+            echo $this->rootContent;
         }
 
         /**
@@ -85,31 +109,57 @@
          */
         // TODO Rework this with a REGEX to catch XX_____XX patterns instead of XX patterns
         private function validateView() {
+            /*
             foreach ($this->sugarTemplateIndicators as $indicator) {
                 if (strpos($this->viewContent, $indicator) !== false) {
                     throw new ViewContentNotRenderedException(Sugar::childClass());
                 }
             }
+            */
         }
 
+        /**
+         * Sets the template indicators
+         *
+         * @param $type          Type of the value to which we assign a template indicator (should be in ['value', 'include'])
+         * @param $indicatorType Type of the template indicator (should be in ['left', 'right', 'include'])
+         *
+         * @throws SugarExecutionException
+         */
+        private function setIndicator($type, $indicatorType) {
+            $type = strtolower($type);
+            $indicatorType = strtolower($indicatorType);
+            $func = 'get' . ucfirst($type) . ucfirst($indicatorType) . 'Indicator';
+            $indicator = _SUGAR::getGlobalConfiguration()->$func();
+
+            $arrayKey = $type . ucfirst($indicatorType);
+            if (!array_key_exists($arrayKey, $this->sugarTemplateIndicators)) {
+                throw new SugarExecutionException;
+            }
+
+            $this->sugarTemplateIndicators[$arrayKey] = $indicator !== null ?
+                                                        $indicator :
+                                                        $this->sugarTemplateIndicators[$arrayKey];
+        }
+
+        /**
+         * Form the view, using all the assigned content
+         */
         private function formView() {
-            $leftIndicatorFromConfig = _SUGAR::getGlobalConfiguration()->getIncludeLeftIndicator();
-            $rightIndicatorFromConfig = _SUGAR::getGlobalConfiguration()->getIncludeRightIndicator();
-            $indicatorSeparatorFromConfig = _SUGAR::getGlobalConfiguration()->getIncludeIndicatorSeparator();
+            $this->setIndicator('include', 'left');
+            $this->setIndicator('include', 'right');
+            $this->setIndicator('include', 'separator');
 
-            $this->sugarTemplateIndicators['includeLeft'] = $leftIndicatorFromConfig !== null ? $leftIndicatorFromConfig : $this->sugarTemplateIndicators['includeLeft'];
-            $this->sugarTemplateIndicators['includeRight'] = $rightIndicatorFromConfig !== null ? $rightIndicatorFromConfig : $this->sugarTemplateIndicators['includeRight'];
-            $this->includeIndicatorSeparator = $indicatorSeparatorFromConfig !== null ? $indicatorSeparatorFromConfig : $this->includeIndicatorSeparator;
-
-            $leftIndicator = $this->sugarTemplateIndicators['includeLeft'] . $this->includeIndicatorSeparator;
-            $rightIndicator =  $this->includeIndicatorSeparator . $this->sugarTemplateIndicators['includeRight'];
+            $leftIndicator = $this->sugarTemplateIndicators['includeLeft'] . $this->sugarTemplateIndicators['includeSeparator'];
+            $rightIndicator =  $this->sugarTemplateIndicators['includeSeparator'] . $this->sugarTemplateIndicators['includeRight'];
 
             $change = null;
+            // TODO Would be really nice to find a more performance friendly method to form the view
             while ($change !== false) {
                 $change = false;
-                foreach ($this->views as $tag => $content) {
+                foreach ($this->partialContents as $tag => $content) {
                     $count = 0;
-                    $this->viewContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->viewContent, $count);
+                    $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->rootContent, $count);
                     if ($count !== 0) {
                         $change = true;
                     }
@@ -117,29 +167,40 @@
             }
         }
 
+        /**
+         * Replace assigned variables in the view content
+         */
         private function assignValues() {
-            $leftIndicatorFromConfig = _SUGAR::getGlobalConfiguration()->getValueLeftIndicator();
-            $rightIndicatorFromConfig = _SUGAR::getGlobalConfiguration()->getValueRightIndicator();
-            $indicatorSeparatorFromConfig = _SUGAR::getGlobalConfiguration()->getValueIndicatorSeparator();
+            $this->setIndicator('value', 'left');
+            $this->setIndicator('value', 'right');
+            $this->setIndicator('value', 'separator');
 
-            $this->sugarTemplateIndicators['valueLeft'] = $leftIndicatorFromConfig !== null ? $leftIndicatorFromConfig : $this->sugarTemplateIndicators['valueLeft'];
-            $this->sugarTemplateIndicators['valueRight'] = $rightIndicatorFromConfig !== null ? $rightIndicatorFromConfig : $this->sugarTemplateIndicators['valueRight'];
-            $this->valueIndicatorSeparator = $indicatorSeparatorFromConfig !== null ? $indicatorSeparatorFromConfig : $this->valueIndicatorSeparator;
+            $leftIndicator = $this->sugarTemplateIndicators['valueLeft'] . $this->sugarTemplateIndicators['valueSeparator'];
+            $rightIndicator =  $this->sugarTemplateIndicators['valueSeparator'] . $this->sugarTemplateIndicators['valueRight'];
 
-            $leftIndicator = $this->sugarTemplateIndicators['valueLeft'] . $this->valueIndicatorSeparator;
-            $rightIndicator =  $this->valueIndicatorSeparator . $this->sugarTemplateIndicators['valueRight'];
-
-            foreach ($this->viewValues as $tag => $value) {
-                $this->viewContent = str_replace($leftIndicator . $tag . $rightIndicator, $value, $this->viewContent);
+            foreach ($this->assignedValues as $tag => $value) {
+                $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $value, $this->rootContent);
             }
         }
 
+        /**
+         * Assigns a value, checking if it already exists
+         *
+         * @param $value         Value to assign
+         * @param $viewValueName Tag/Key of the assigned value
+         *
+         * @throws ValueAlreadyDefinedException
+         */
         public function assignValue($value, $viewValueName) {
-            if (isset($this->viewValues[$viewValueName])) {
+            if (isset($this->assignedValues[$viewValueName])) {
                 throw new ValueAlreadyDefinedException(Sugar::childClass(), $viewValueName);
             }
 
-            $this->viewValues[$viewValueName] = $value;
+            if (is_object($value)) {
+                $value = (string) $value;
+            }
+
+            $this->assignedValues[$viewValueName] = $value;
         }
 
     }
