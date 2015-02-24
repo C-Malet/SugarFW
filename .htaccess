@@ -6,4 +6,5 @@ RewriteBase /
 RewriteCond %{ENV:REDIRECT_STATUS} 200
 RewriteRule .* - [L]
 
+RewriteCond %{REQUEST_URI} !(\.css|\.js|\.png|\.jpg|\.gif|robots\.txt)$ [NC]
 RewriteRule ^ sugarRouter.php [L]

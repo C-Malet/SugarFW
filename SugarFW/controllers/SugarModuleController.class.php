@@ -49,7 +49,7 @@
         /**
          * Execute the controller action
          */
-        protected function executeAction() {
+        public function executeAction() {
             if (!empty($this->action)) {
                 if ($this->validateAction() === false) {
                     return false;

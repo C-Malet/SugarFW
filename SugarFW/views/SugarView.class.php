@@ -99,11 +99,11 @@
 
             if ($content === null) {
                 if (file_exists($contentPath) === false) {
-                    throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
+                    throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
                 }
                 $content = file_get_contents($contentPath);
                 if ($content === false) {
-                    throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
+                    throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
                 }
             }
             $this->rootContent = $content;
@@ -272,7 +272,7 @@
          */
         public function mergeView(SugarView $view, $tag) {
             if (isset($this->subViews[$tag])) {
-                throw new SubViewAlreadyDefinedException(self::childClass(), $view, $tag);
+                throw new SubViewAlreadyDefinedException(self::childClass(), $view::childClass(), $tag);
             }
             $this->subViews[$tag] = $view;
         }
