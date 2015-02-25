@@ -36,6 +36,9 @@
         /* @var boolean */
         private $rendered = false;
 
+        /* @var array */
+        private $phpVars = [];
+
         /**
          * List of sugarTemplateIndicators used to render the view
          * Even though these indicators are hard coded here `just in case`, they
@@ -69,7 +72,7 @@
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
 
-            $content = Sugar::fileGetContentsExecPHP($contentPath);
+            $content = $this->fileGetContentsExecPHP($contentPath, $this->phpVars);
 
             if ($content === false) {
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
@@ -104,7 +107,7 @@
                     throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
                 }
 
-                $content = Sugar::fileGetContentsExecPHP($contentPath);
+                $content = $this->fileGetContentsExecPHP($contentPath);
 
                 if ($content === false) {
                     throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
@@ -121,7 +124,7 @@
          * @return string
          */
         public function renderView($isSubView = false) {
-            $this->formView();
+            $this->formView($isSubView);
 
             $this->assignValues();
 
@@ -199,17 +202,13 @@
                 throw new ViewRootContentNotSetException(self::childClass());
             }
 
-            if (!empty($this->subViews)) {
-                $this->setIndicators('view');
+            while ($this->formSubViews() !== 0 && $this->formIncludes() !== 0);
 
-                $leftIndicator = $this->sugarTemplateIndicators['viewLeft'] . $this->sugarTemplateIndicators['viewSeparator'];
-                $rightIndicator =  $this->sugarTemplateIndicators['viewSeparator'] . $this->sugarTemplateIndicators['viewRight'];
+            $this->formed = true;
+        }
 
-                foreach ($this->subViews as $tag => $view) {
-                    $content = $view->renderView(true);
-                    $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->rootContent);
-                }
-            }
+        private function formIncludes() {
+            $totalChanges = 0;
 
             $this->setIndicators('include');
 
@@ -224,12 +223,35 @@
                     $count = 0;
                     $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->rootContent, $count);
                     if ($count !== 0) {
+                        ++$totalChanges;
                         $change = true;
                     }
                 }
             }
 
-            $this->formed = true;
+            return $totalChanges;
+        }
+
+        private function formSubViews() {
+            $totalChanges = 0;
+
+            if (!empty($this->subViews)) {
+                $this->setIndicators('view');
+
+                $leftIndicator = $this->sugarTemplateIndicators['viewLeft'] . $this->sugarTemplateIndicators['viewSeparator'];
+                $rightIndicator =  $this->sugarTemplateIndicators['viewSeparator'] . $this->sugarTemplateIndicators['viewRight'];
+
+                foreach ($this->subViews as $tag => $view) {
+                    $count = 0;
+                    $content = $view->renderView(true);
+                    $this->rootContent = str_replace($leftIndicator . $tag . $rightIndicator, $content, $this->rootContent, $count);
+                    if ($count !== 0) {
+                        ++$totalChanges;
+                    }
+                }
+            }
+
+            return $totalChanges;
         }
 
         /**
@@ -305,6 +327,27 @@
             } else {
                 throw new InvalidArgumentException('Invalid argument for function SugarView::removeView, expected SugarView or string.');
             }
+        }
+
+        public function addVariable($varName, $var) {
+            $this->phpVars[$varName] = $var;
+        }
+
+        /**
+         * Loads a file containing some PHP content,
+         * execute the PHP within the output_buffer
+         * and return the resulting content.
+         *
+         * @param $filePath path of the file to retrieve
+         *
+         * @return string
+         *
+         * @see http://stackoverflow.com/a/8751222/2627459
+         */
+        public function fileGetContentsExecPHP($filePath, $phpVars = []) {
+            ob_start();
+            include $filePath;
+            return ob_get_clean();
         }
 
     }
