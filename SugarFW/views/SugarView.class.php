@@ -68,7 +68,9 @@
             if (file_exists($contentPath) === false) {
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
-            $content = file_get_contents($contentPath);
+
+            $content = Sugar::fileGetContentsExecPHP($contentPath);
+
             if ($content === false) {
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
@@ -101,7 +103,9 @@
                 if (file_exists($contentPath) === false) {
                     throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
                 }
-                $content = file_get_contents($contentPath);
+
+                $content = Sugar::fileGetContentsExecPHP($contentPath);
+
                 if ($content === false) {
                     throw new CouldNotLoadViewContentException(self::childClass(), 'rootContent', $contentPath);
                 }
