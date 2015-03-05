@@ -1,22 +1,25 @@
 <?php
 
-    include 'exceptions/views/RootViewAlreadyDefinedException.class.php';
-    include 'exceptions/views/ViewAlreadyDefinedException.class.php';
-    include 'exceptions/views/CouldNotLoadViewContentException.class.php';
-    include 'exceptions/views/ViewContentNotRenderedException.class.php';
-    include 'exceptions/views/ValueAlreadyDefinedException.class.php';
-    include 'exceptions/views/ViewRootContentNotSetException.class.php';
-    include 'exceptions/views/SubViewAlreadyDefinedException.class.php';
-    include 'exceptions/views/ViewAlreadyFormedException.class.php';
-    include 'exceptions/views/SubViewNotDefinedException.class.php';
+    include_once 'exceptions/views/RootViewAlreadyDefinedException.class.php';
+    include_once 'exceptions/views/ViewAlreadyDefinedException.class.php';
+    include_once 'exceptions/views/CouldNotLoadViewContentException.class.php';
+    include_once 'exceptions/views/ViewContentNotRenderedException.class.php';
+    include_once 'exceptions/views/ValueAlreadyDefinedException.class.php';
+    include_once 'exceptions/views/ViewRootContentNotSetException.class.php';
+    include_once 'exceptions/views/SubViewAlreadyDefinedException.class.php';
+    include_once 'exceptions/views/ViewAlreadyFormedException.class.php';
+    include_once 'exceptions/views/SubViewNotDefinedException.class.php';
 
-    include 'exceptions/SugarExecutionException.class.php';
+    include_once 'exceptions/SugarExecutionException.class.php';
 
-    include 'traits/StaticHelpers.class.php';
+    include_once 'traits/StaticHelpers.class.php';
 
     class SugarView {
 
         use StaticHelpers;
+
+        /* @var SugarLayout */
+        private $layout = null;
 
         /* @var string */
         private $rootContent;
@@ -35,9 +38,6 @@
 
         /* @var boolean */
         private $rendered = false;
-
-        /* @var array */
-        private $phpVars = [];
 
         /**
          * List of sugarTemplateIndicators used to render the view
@@ -72,7 +72,7 @@
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
             }
 
-            $content = $this->fileGetContentsExecPHP($contentPath, $this->phpVars);
+            $content = $this->fileGetContentsExecPHP($contentPath);
 
             if ($content === false) {
                 throw new CouldNotLoadViewContentException(self::childClass(), $contentName, $contentPath);
@@ -202,11 +202,18 @@
                 throw new ViewRootContentNotSetException(self::childClass());
             }
 
-            while ($this->formSubViews() !== 0 && $this->formIncludes() !== 0);
+            // Forms subviews and includes until there is nothing left to form
+            // from successive inclusions
+            while ($this->formSubViews() !== 0 || $this->formIncludes() !== 0);
 
             $this->formed = true;
         }
 
+        /**
+         * Forms includes loaded
+         *
+         * @return integer
+         */
         private function formIncludes() {
             $totalChanges = 0;
 
@@ -232,6 +239,11 @@
             return $totalChanges;
         }
 
+        /**
+         * Forms subviews loaded
+         *
+         * @return integer
+         */
         private function formSubViews() {
             $totalChanges = 0;
 
@@ -315,22 +327,21 @@
                 if (!isset($this->subViews[$view])) {
                     throw new SubViewNotDefinedException(self::childClass(), $view);
                 }
+
                 unset($this->subViews[$view]);
             } else if (is_object($view) && $view instanceof SugarView) {
                 $keysToRemove = array_keys($this->subViews, $view, true);
+
                 if (empty($keysToRemove)) {
                     throw new SubViewNotDefinedException(self::childClass(), $view);
                 }
+
                 foreach ($keysToRemove as $key) {
                     unset($this->subViews[$key]);
                 }
             } else {
                 throw new InvalidArgumentException('Invalid argument for function SugarView::removeView, expected SugarView or string.');
             }
-        }
-
-        public function addVariable($varName, $var) {
-            $this->phpVars[$varName] = $var;
         }
 
         /**
@@ -344,7 +355,7 @@
          *
          * @see http://stackoverflow.com/a/8751222/2627459
          */
-        public function fileGetContentsExecPHP($filePath, $phpVars = []) {
+        public function fileGetContentsExecPHP($filePath) {
             ob_start();
             include $filePath;
             return ob_get_clean();

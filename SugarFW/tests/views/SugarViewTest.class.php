@@ -3,6 +3,7 @@
     include 'views/SugarView.class.php';
     include 'helpers/SugarGlobals.class.php';
     include 'helpers/SugarConfiguration.class.php';
+    include 'views/SugarLayout.class.php';
 
     class SugarViewTest extends PHPUnit_Framework_TestCase {
 
@@ -77,7 +78,6 @@
             $this->view->assignValue('myVal', 'val');
             $this->view->assignValue('anotherVal', 'val');
         }
-
     }
 
 ?>

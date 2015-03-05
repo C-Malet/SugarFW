@@ -1,9 +1,9 @@
 <?php
 
-    include 'controllers/SugarModuleController.class.php';
+    include_once 'controllers/SugarController.class.php';
 
-    include 'exceptions/controllers/ControllerNotFoundException.class.php';
-    include 'exceptions/controllers/ClassControllerNotFoundException.class.php';
+    include_once 'exceptions/controllers/ControllerNotFoundException.class.php';
+    include_once 'exceptions/controllers/ClassControllerNotFoundException.class.php';
 
     class SugarRouter {
 
@@ -115,7 +115,6 @@
          */
         public function launchController() {
             $controllerClassFile = $this->controllerPath . '/_controllers/' . ucfirst($this->controllerName) . '.class.php';
-            $viewClassFile = $this->controllerPath . '/_views/' . ucfirst($this->viewName) . '.class.php';
 
             if (!is_file($controllerClassFile)) {
                 // By default, the controller name is equals to (MODULE_NAME . 'Controller')
@@ -134,8 +133,14 @@
             include $controllerClassFile;
 
             // Auto include of view files is not mandatory
+            $viewClassFile = $this->controllerPath . '/_views/' . ucfirst($this->viewName) . '.class.php';
             if (is_file($viewClassFile)) {
                 include $viewClassFile;
+            } else {
+                $viewClassFile = $this->controllerPath . '/_views/View.class.php';
+                if (is_file($viewClassFile)) {
+                    include $viewClassFile;
+                }
             }
 
             if (!class_exists($this->controllerName)) {
@@ -146,7 +151,8 @@
             $controller = new $controllerName(
                 $this->controllerName,
                 $this->controllerAction,
-                $this->controllerParams
+                $this->controllerParams,
+                $this->controllerPath
             );
         }
 

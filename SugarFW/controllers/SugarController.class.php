@@ -144,6 +144,15 @@
             return true;
         }
 
+        /**
+         *
+         */
+        public function getControllerView() {
+            $viewClassName = str_replace('Controller', '', $this->name) . 'View';
+            $view = new $viewClassName;
+            return $view;
+        }
+
         public function setControllerConfiguration(SugarConfiguration $configuration) {
             $this->configuration = $configuration;
         }

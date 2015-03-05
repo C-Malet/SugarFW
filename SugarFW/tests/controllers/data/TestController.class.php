@@ -1,6 +1,6 @@
 <?php
 
-    class TestController extends SugarModuleController {
+    class TestController extends SugarController {
 
         public function control() {
 

@@ -1,11 +1,11 @@
 <?php
 
-    include 'controllers/SugarModuleController.class.php';
+    include 'controllers/SugarController.class.php';
     include 'tests/controllers/data/TestController.class.php';
 
     class SugarControllerTest extends PHPUnit_Framework_TestCase {
 
-        /** @var SugarModuleController */
+        /** @var SugarController */
         private $controller;
 
         public function setUp() {
