@@ -1,9 +1,5 @@
 <?php
 
-    include_once 'exceptions/actions/ActionNotHandledException.class.php';
-    include_once 'exceptions/actions/ActionNotImplementedException.class.php';
-    include_once 'views/SugarView.class.php';
-
     abstract class SugarController {
 
         /* @var string */
@@ -41,13 +37,13 @@
             $this->params = $params;
             $this->action = $action;
 
-            $this->control();
+            $this->controllerConstruct();
         }
 
         /**
          * Control function executed right after the controller has been instantiated
          */
-        abstract protected function control();
+        abstract protected function controllerConstruct();
 
         /**
          * Execute the controller action

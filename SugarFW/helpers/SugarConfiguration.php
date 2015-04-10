@@ -23,7 +23,7 @@
          */
         public function getModulesRoot() {
             if (isset($this->config['ModulesRoot'])) {
-                return array_filter(explode('/', $this->config['ModulesRoot']));
+                return array_filter(explode(DIRECTORY_SEPARATOR, $this->config['ModulesRoot']));
             } else {
                 return array();
             }
